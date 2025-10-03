@@ -1,0 +1,72 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 5d6170672bbb4d628d50f1e778fd370f
+      name: backup
+  templates:
+    - uuid: 720701f684e44fc1a9d3258fd4419f41
+      template: 'VeeamBackupBy TI - Postgres'
+      name: 'VeeamBackupBy TI - Postgres'
+      groups:
+        - name: backup
+      discovery_rules:
+        - uuid: 35df0b938a2249d28061876a2a1ceb73
+          name: 'Veeam Job Discovery'
+          key: veeam.discovery.jobs
+          delay: 1h
+          item_prototypes:
+            - uuid: ecbf0b5a93fd4f9fb6dbed26d9072c9d
+              name: 'Job [{#JOBNAME}] - Last End'
+              key: 'veeam.job.lastend[{#JOBNAME}]'
+              delay: 10m
+              value_type: CHAR
+              trends: '0'
+            - uuid: 6e26540740a347aabf603de64a94883b
+              name: 'Job [{#JOBNAME}] - Last Start'
+              key: 'veeam.job.laststart[{#JOBNAME}]'
+              delay: 10m
+              value_type: CHAR
+              trends: '0'
+            - uuid: eb5c8d6a5ab7424aae7a8cbf1df2456b
+              name: 'Job [{#JOBNAME}] - Status'
+              key: 'veeam.job.status[{#JOBNAME}]'
+              delay: 5m
+              valuemap:
+                name: 'Status Backups'
+              trigger_prototypes:
+                - uuid: 44ec7154107e42458d304ae7a0d88935
+                  expression: 'last(/VeeamBackupBy TI - Postgres/veeam.job.status[{#JOBNAME}])=2'
+                  name: 'Job {#JOBNAME} Failed'
+                  priority: HIGH
+                - uuid: e84c8c76115348ca991ae24870413a6c
+                  expression: 'last(/VeeamBackupBy TI - Postgres/veeam.job.status[{#JOBNAME}])=1'
+                  name: 'Job {#JOBNAME} Warning'
+                  priority: WARNING
+        - uuid: ddb133477e4f454bb74343f839602c33
+          name: 'Veeam Repository Discovery'
+          key: veeam.discovery.repos
+          delay: 1h
+          status: DISABLED
+          item_prototypes:
+            - uuid: 7389326dcbf340679ea5693cc80990ba
+              name: 'Repo [{#REPONAME}] - Capacity (GB)'
+              key: 'veeam.repo.capacity[{#REPONAME}]'
+              delay: 1h
+              units: GB
+            - uuid: 2d360c060c9047d48ad63db17faec805
+              name: 'Repo [{#REPONAME}] - Free Space (GB)'
+              key: 'veeam.repo.freespace[{#REPONAME}]'
+              delay: 10m
+              units: GB
+      valuemaps:
+        - uuid: 0f73e009042c4a53982bbf62d84dc983
+          name: 'Status Backups'
+          mappings:
+            - value: '0'
+              newvalue: OK
+            - value: '1'
+              newvalue: Warning
+            - value: '2'
+              newvalue: Fail
+            - value: '3'
+              newvalue: Fail
