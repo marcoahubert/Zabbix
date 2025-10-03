@@ -1,0 +1,2 @@
+# linux
+Destinado a scripts
